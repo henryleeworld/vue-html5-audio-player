@@ -11,5 +11,5 @@ $ git clone
 ----
 
 ## 畫面截圖
-![](https://i.imgur.com/uuGUfxc.gif)
+![](https://i.imgur.com/3EPEzyM.gif)
 > 當點擊播放按鈕時播放音樂

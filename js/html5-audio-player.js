@@ -1,5 +1,4 @@
-new Vue({
-    el: "#app",
+const app = Vue.createApp({
     data() {
         return {
             audio: null,
@@ -55,13 +54,14 @@ new Vue({
                     source: "music/shining-star.mp3",
                     url: "https://www.youtube.com/watch?v=e-l-8xJHUfs",
                     favorited: true
-                },
+                }
             ],
             currentTrack: null,
             currentTrackIndex: 0,
             transitionName: null
         };
     },
+
     methods: {
         play() {
             if (this.audio.paused) {
@@ -72,53 +72,50 @@ new Vue({
                 this.isTimerPlaying = false;
             }
         },
+
         generateTime() {
             let width = (100 / this.audio.duration) * this.audio.currentTime;
             this.barWidth = width + "%";
             this.circleLeft = width + "%";
+
             let durmin = Math.floor(this.audio.duration / 60);
-            let dursec = Math.floor(this.audio.duration - durmin * 60);
+            let dursec = Math.floor(this.audio.duration % 60);
             let curmin = Math.floor(this.audio.currentTime / 60);
-            let cursec = Math.floor(this.audio.currentTime - curmin * 60);
-            if (durmin < 10) {
-                durmin = "0" + durmin;
-            }
-            if (dursec < 10) {
-                dursec = "0" + dursec;
-            }
-            if (curmin < 10) {
-                curmin = "0" + curmin;
-            }
-            if (cursec < 10) {
-                cursec = "0" + cursec;
-            }
-            this.duration = durmin + ":" + dursec;
-            this.currentTime = curmin + ":" + cursec;
+            let cursec = Math.floor(this.audio.currentTime % 60);
+
+            if (durmin < 10) durmin = "0" + durmin;
+            if (dursec < 10) dursec = "0" + dursec;
+            if (curmin < 10) curmin = "0" + curmin;
+            if (cursec < 10) cursec = "0" + cursec;
+
+            this.duration = `${durmin}:${dursec}`;
+            this.currentTime = `${curmin}:${cursec}`;
         },
+
         updateBar(x) {
-            let progress = this.$refs.progress;
-            let maxduration = this.audio.duration;
-            let position = x - progress.offsetLeft;
-            let percentage = (100 * position) / progress.offsetWidth;
-            if (percentage > 100) {
-                percentage = 100;
-            }
-            if (percentage < 0) {
-                percentage = 0;
-            }
+            const progress = this.$refs.progress;
+            let max = this.audio.duration;
+            let pos = x - progress.offsetLeft;
+            let percentage = (100 * pos) / progress.offsetWidth;
+
+            percentage = Math.min(Math.max(percentage, 0), 100);
+
             this.barWidth = percentage + "%";
             this.circleLeft = percentage + "%";
-            this.audio.currentTime = (maxduration * percentage) / 100;
+            this.audio.currentTime = (max * percentage) / 100;
             this.audio.play();
         },
+
         clickProgress(e) {
             this.isTimerPlaying = true;
             this.audio.pause();
             this.updateBar(e.pageX);
         },
+
         prevTrack() {
             this.transitionName = "scale-in";
             this.isShowCover = false;
+
             if (this.currentTrackIndex > 0) {
                 this.currentTrackIndex--;
             } else {
@@ -127,9 +124,11 @@ new Vue({
             this.currentTrack = this.tracks[this.currentTrackIndex];
             this.resetPlayer();
         },
+
         nextTrack() {
             this.transitionName = "scale-out";
             this.isShowCover = false;
+
             if (this.currentTrackIndex < this.tracks.length - 1) {
                 this.currentTrackIndex++;
             } else {
@@ -138,11 +137,13 @@ new Vue({
             this.currentTrack = this.tracks[this.currentTrackIndex];
             this.resetPlayer();
         },
+
         resetPlayer() {
             this.barWidth = 0;
             this.circleLeft = 0;
             this.audio.currentTime = 0;
             this.audio.src = this.currentTrack.source;
+
             setTimeout(() => {
                 if (this.isTimerPlaying) {
                     this.audio.play();
@@ -151,35 +152,35 @@ new Vue({
                 }
             }, 300);
         },
+
         favorite() {
-            this.tracks[this.currentTrackIndex].favorited = !this.tracks[
-                this.currentTrackIndex
-            ].favorited;
+            const track = this.tracks[this.currentTrackIndex];
+            track.favorited = !track.favorited;
         }
     },
+
     created() {
-        let vm = this;
         this.currentTrack = this.tracks[0];
+
         this.audio = new Audio();
         this.audio.src = this.currentTrack.source;
-        this.audio.ontimeupdate = function() {
-            vm.generateTime();
-        };
-        this.audio.onloadedmetadata = function() {
-            vm.generateTime();
-        };
-        this.audio.onended = function() {
-            vm.nextTrack();
+
+        this.audio.ontimeupdate = () => this.generateTime();
+        this.audio.onloadedmetadata = () => this.generateTime();
+        this.audio.onended = () => {
+            this.nextTrack();
             this.isTimerPlaying = true;
         };
 
-        for (let index = 0; index < this.tracks.length; index++) {
-            const element = this.tracks[index];
-            let link = document.createElement('link');
+        // Prefetch images
+        this.tracks.forEach(t => {
+            const link = document.createElement("link");
             link.rel = "prefetch";
-            link.href = element.cover;
-            link.as = "image"
-            document.head.appendChild(link)
-        }
+            link.href = t.cover;
+            link.as = "image";
+            document.head.appendChild(link);
+        });
     }
 });
+
+app.mount("#app");
